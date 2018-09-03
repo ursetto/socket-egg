@@ -1,7 +1,10 @@
 ;;; Local macros
 
-;;(require-library srfi-13) ;;?
-(import-for-syntax srfi-13)
+(import scheme)
+(import (chicken syntax))
+(begin-for-syntax
+ (import (chicken string))
+ (import (srfi 13)))
 
 ;; ;; (local 'ip/multicast-ttl) => '_ip_multicast_ttl
 ;; (define-for-syntax (local s)

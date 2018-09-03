@@ -37,13 +37,24 @@
 ;; OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-(import scheme (except chicken errno) foreign)
-(use foreigners)
-(use srfi-4 extras ports)
-(use (only srfi-13 string-index))
+(import scheme)
+(import (chicken foreign))
+(import (chicken format))
+(import (chicken syntax))
+(begin-for-syntax
+ (import (chicken format)))
+(import (chicken fixnum))
+(import (chicken port))
+(import (chicken time))
+(import (chicken condition))
+(import (chicken blob))
+(import (srfi 4))
+(import (only (srfi 13) string-index))
+(import (srfi 18))
+(import foreigners)
 ;; Pull TCP in w/o importing so ##sys#tcp-port->fileno is defined
 ;; and network is started up.
-(require-library tcp)
+;; (require-library tcp)
 
 #> #include "socket.h" <#
 
@@ -96,12 +107,13 @@
 ;; (define-for-syntax (c-name sym)
 ;;   (string-translate (string-upcase (symbol->string sym)) "/" "_"))
 (define-syntax define-foreign-flag
-  (lambda (e r c)
-    (let ((name (cadr e)))
-      `(,(r 'begin)
-        (,(r 'foreign-declare)
-         ,(sprintf "#ifndef ~A\n#define ~A 0\n#endif\n" name name))
-        (,(r 'define-foreign-variable) ,name ,(r 'int) ,(symbol->string name))))))
+  (er-macro-transformer
+   (lambda (e r c)
+     (let ((name (cadr e)))
+       `(,(r 'begin)
+         (,(r 'foreign-declare)
+          ,(sprintf "#ifndef ~A\n#define ~A 0\n#endif\n" name name))
+         (,(r 'define-foreign-variable) ,name ,(r 'int) ,(symbol->string name)))))))
 
 (define-foreign-enum-type (address-family int)
   (address-family->integer integer->address-family)
@@ -110,7 +122,7 @@
   ((af/inet6 AF_INET6) AF_INET6)
 ;; #+AF_UNIX ((af/unix AF_UNIX) AF_UNIX)
   )
-#+AF_UNIX (define-foreign-variable AF_UNIX int AF_UNIX)
+#+AF_UNIX (define-foreign-variable AF_UNIX int "AF_UNIX")
 (define af/unspec AF_UNSPEC)
 (define af/inet AF_INET)
 (define af/inet6 AF_INET6)
@@ -593,8 +605,6 @@
         (network-error/errno 'socket "unable to set socket to non-blocking" so))
       so)))
 
-(use srfi-18)
-
 ;; Stolen from sql-de-lite (itself stolen from sqlite), but modified to respect
 ;; actual elapsed time instead of estimated elapsed time (to mostly avoid scheduling jitter).
 ;; The polling intervals are not altered, only the total elapsed time.
@@ -618,8 +628,6 @@
                        (thread-sleep! (/ delay 1000)) ;; silly division
                        #t)))))))))))
 
-(define-constant +largest-fixnum+ (##sys#fudge 21)) 
-
 ;; Returns a special "transient" error (exn i/o net transient) if connection failure
 ;; was due to refusal, network down, etc.; in which case, the same or another
 ;; address could be tried later. (The socket is still closed, though.)
@@ -637,7 +645,7 @@
             (begin
               (cond-expand
                (windows   ;; WINSOCK--connect failure returned in exceptfds; manually schedule
-                (let ((wait (busy-timeout (or timeout +largest-fixnum+)))) ;; 12.4 days on 32bit
+                (let ((wait (busy-timeout (or timeout most-positive-fixnum)))) ;; 12.4 days on 32bit
                   (let loop ((n 0))
                     (let ((f (select-for-write-or-except s)))
                       (cond ((eq? f -1)

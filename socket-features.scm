@@ -1,4 +1,7 @@
-(use feature-test)
+(import scheme)
+(import (chicken base))
+(import (chicken foreign))
+(import feature-test)
 
 #> #include "socket.h" <#
 
