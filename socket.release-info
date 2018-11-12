@@ -1,6 +1,7 @@
 (repo git "https://github.com/ursetto/{egg-name}-egg")
 (uri targz "https://github.com/ursetto/{egg-name}-egg/tarball/{egg-release}")
 ;; (release "0.2.6")
+(release "0.2.7")
 
 ;; Old call-cc repository for this egg. We split the repository into 3 pieces
 ;; when moving rfc2553 from mercurial to git. Old tags have been preserved, 
