@@ -6,3 +6,6 @@
 *.build.sh
 *.install.sh
 *~
+
+socket-features
+socket-config.scm
