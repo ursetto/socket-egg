@@ -6,7 +6,7 @@
 (category net)
 (components (generated-source-file socket-config
                                    (custom-build "build-socket-config")
-                                   (source "socket-features.scm"))
+                                   (source-dependencies "socket-features.scm"))
             (extension socket
                        (source "socket-mod.scm")
                        (component-dependencies socket-config)
