@@ -52,9 +52,10 @@
 (import (only (srfi 13) string-index))
 (import (srfi 18))
 (import foreigners)
-;; Pull TCP in w/o importing so ##sys#tcp-port->fileno is defined
-;; and network is started up.
-;; (require-library tcp)
+;; Note: port->fileno stopped depending on Unit tcp's tcp-port->fileno
+;; as of Chicken 4.8.1 (9f973003b1e2 Oct 28 2012), so we no longer
+;; pull in tcp here. This means 4.8.1 is a requirement for port->fileno 
+;; to work on our ports.
 
 #> #include "socket.h" <#
 
@@ -1316,6 +1317,8 @@
 
 ;;; network startup
 
+;; Taken from Unit tcp. We no longer depend on tcp, so we need
+;; to start up the network ourselves.
 (define socket-startup
   (foreign-lambda* bool () "
 #ifdef _WIN32
@@ -1326,9 +1329,10 @@
 #endif
 "))
 
-;; We require unit tcp above so this should already be done.
-;; (unless (socket-startup)   ;; hopefully, this is safe to run multiple times
-;;   (network-error 'socket-startup "cannot initialize socket code"))
+;; Start up unconditionally on initialization. Hopefully, 
+;; this is safe to run multiple times.
+(unless (socket-startup)
+  (network-error 'socket-startup "failed to initialize the network"))
 
 ;;; Notes / TODOs
 
