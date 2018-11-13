@@ -76,7 +76,11 @@
 ;; NB importing scheme here so eval inside read-syntax works in included
 ;; files.  The include seems to reset the eval environment to what's imported
 ;; in this module by the include point.
-(import scheme (chicken base))
+(import scheme)
+(cond-expand
+  (chicken-4
+    (import (only chicken include)))
+  (else (import (chicken base))))
 (include "socket.scm")
 
 )

@@ -38,20 +38,29 @@
 
 
 (import scheme)
-(import (chicken foreign))
-(import (chicken format))
-(import (chicken syntax))
-(begin-for-syntax
- (import (chicken format)))
-(import (chicken fixnum))
-(import (chicken port))
-(import (chicken time))
-(import (chicken condition))
-(import (chicken blob))
-(import (srfi 4))
-(import (only (srfi 13) string-index))
-(import (srfi 18))
-(import foreigners)
+(cond-expand
+ (chicken-4
+  (import (except chicken errno) foreign)
+  (use foreigners)
+  (use srfi-4 extras ports)
+  (use (only srfi-13 string-index))
+  (use srfi-18))
+ (else
+  (import (chicken foreign))
+  (import (chicken format))
+  (import (chicken syntax))
+  (begin-for-syntax
+   (import (chicken format)))
+  (import (chicken fixnum))
+  (import (chicken port))
+  (import (chicken time))
+  (import (chicken condition))
+  (import (chicken blob))
+  (import (srfi 4))
+  (import (only (srfi 13) string-index))
+  (import (srfi 18))
+  (import foreigners)))
+
 ;; Note: port->fileno stopped depending on Unit tcp's tcp-port->fileno
 ;; as of Chicken 4.8.1 (9f973003b1e2 Oct 28 2012), so we no longer
 ;; pull in tcp here. This means 4.8.1 is a requirement for port->fileno 

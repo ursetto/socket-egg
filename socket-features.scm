@@ -1,7 +1,12 @@
 (import scheme)
-(import (chicken base))
-(import (chicken foreign))
-(import feature-test)
+
+(cond-expand
+  (chicken-4
+    (use feature-test))
+  (else
+    (import (chicken base))
+    (import (chicken foreign))
+    (import feature-test)))
 
 #> #include "socket.h" <#
 
