@@ -3,6 +3,7 @@
 ;; (release "0.2.6")
 (release "0.2.7")
 (release "0.3.0")
+(release "0.3.1")
 
 ;; Old call-cc repository for this egg. We split the repository into 3 pieces
 ;; when moving rfc2553 from mercurial to git. Old tags have been preserved, 
