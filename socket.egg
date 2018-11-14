@@ -4,7 +4,7 @@
 (dependencies srfi-13 srfi-18 foreigners feature-test)
 (license "BSD")
 (category net)
-(version "0.2.7")
+(version "0.3.0")
 (components (generated-source-file socket-config
                                    (custom-build "build-socket-config")
                                    (source-dependencies "socket-features.scm"))
