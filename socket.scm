@@ -1177,7 +1177,7 @@
 	       #-scan-buffer-line-returns-3-vals
 	       (lambda (p limit)	; read-line
 		 (let loop ((str #f)
-			    (limit (or limit (##sys#fudge 21))))
+			    (limit (or limit most-positive-fixnum)))
 		   (cond ((fx< bufindex buflen)
 			  (##sys#scan-buffer-line
 			   buf 
@@ -1210,7 +1210,7 @@
 		   (read-input))
 		 (if (fx>= bufindex buflen)
 		     #!eof
-		     (let ((limit (or limit (fx- (##sys#fudge 21) bufindex))))
+		     (let ((limit (or limit (fx- most-positive-fixnum bufindex))))
 		       (receive (next line full-line?)
 			   (##sys#scan-buffer-line
 			    buf
