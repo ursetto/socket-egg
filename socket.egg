@@ -1,0 +1,18 @@
+(
+(synopsis "Interface to the BSD socket API")
+(author "Jim Ursetto")
+(dependencies srfi-13 srfi-18 foreigners feature-test)
+(license "BSD")
+(category net)
+(version "0.2.7")
+(components (generated-source-file socket-config
+                                   (custom-build "build-socket-config")
+                                   (source-dependencies "socket-features.scm"))
+            (extension socket
+                       (source "socket-mod.scm")
+                       (component-dependencies socket-config)
+                       (csc-options "-O2" "-d1"
+                                    "-X" "socket-config"
+                                    "-X" "feature-test-syntax"
+                                    "-D" "scan-buffer-line-returns-3-vals")))
+)
