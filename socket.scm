@@ -1278,15 +1278,12 @@
 			      ;; you can flush the buffer before a big write.
 			      (let* ((slop (fxmod olen outbufsize))
 				     (end (fx- olen slop)))
-				(print `(slop ,slop end ,end))
 				(let ((s (if (fx= outbufindex 0)
 					     s
 					     (##sys#string-append
 					      (substring outbuf 0 outbufindex) s))))
-				  (print `(s ,s))
 				  (output s 0 end)
 				  (when (fx> slop 0)
-				    (print `(slopping))
 				    (##core#inline "C_substring_copy" s outbuf end olen 0))
 				  (set! outbufindex slop))))))
                      (void))
