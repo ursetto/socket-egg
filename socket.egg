@@ -10,6 +10,7 @@
                                    (source-dependencies "socket-features.scm"))
             (extension socket
                        (source "socket-mod.scm")
+                       (source-dependencies "socket.scm")
                        (component-dependencies socket-config)
                        (csc-options "-O2" "-d1"
                                     "-X" "socket-config"
