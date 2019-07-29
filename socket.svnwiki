@@ -4,7 +4,7 @@
 
 '''socket''' provides an interface to the BSD socket API.  For a somewhat higher-level interface, see the [[/egg/tcp6|tcp6]] and [[/egg/udp6|udp6]] extensions.
 
-== Overview
+=== Overview
 
 This extension provides a comprehensive interface to BSD sockets,
 including socket creation, client and server setup, data transfer, i/o
@@ -17,9 +17,9 @@ continue to run, even on Windows platforms.
 
 [[toc:]]
 
-== Socket interface
+=== Socket interface
 
-=== Socket creation
+==== Socket creation
 
 <record>socket</record><br>
 <procedure>(socket family type #!optional (protocol 0))</procedure><br>
@@ -30,8 +30,8 @@ continue to run, even on Windows platforms.
 <procedure>(socket-protocol so)</procedure><br>
 
 Socket objects.  You construct a socket using the {{socket}} procedure,
-passing an address family {{af/*}} constant for FAMILY (IPv4, IPv6) and a
-socket type {{sock/*}} constant for socket TYPE (TCP, UDP).  PROTOCOL
+passing an address family {{af/*}} constant for {{family}} (IPv4, IPv6) and a
+socket type {{sock/*}} constant for socket {{type}} (TCP, UDP).  {{protocol}}
 should almost always be zero, unless you are creating raw sockets; it is
 implicit in the socket type.  Sockets take up a file descriptor in the
 system until closed, which may or may not happen automatically on error.
@@ -39,10 +39,10 @@ All sockets are created in non-blocking mode.
 
 Accessors:
 
-; {{fileno}} : The socket's file descriptor.
-; {{family}} : The socket family, an integer constant.
-; {{type}} : The socket type, an integer constant.
-; {{protocol}} : The socket protocol, an integer constant.
+; {{socket-fileno}} : The socket's file descriptor.
+; {{socket-family}} : The socket family, an integer constant.
+; {{socket-type}} : The socket type, an integer constant.
+; {{socket-protocol}} : The socket protocol, an integer constant.
 
 Note that sockets are also implicitly created by {{socket-connect/ai}}
 and {{socket-accept}}.
@@ -81,7 +81,7 @@ Socket type constants for socket creation.
 
 Protocol constants for socket creation.
 
-=== Socket addresses
+==== Socket addresses
 
 <record>sockaddr</record><br>
 <procedure>(sockaddr? sa)</procedure><br>
@@ -102,21 +102,21 @@ complex to use.  For UNIX sockets, use {{unix-address}}.
 
 Socket address object accessors are:
 
-; {{family}} : returns the socket address family as an integer constant, e.g. {{af/inet}}.
-; {{address}} : returns the address of a socket as a string (for Internet sockets, this is the IP address).
-; {{port}} : returns the socket port for Internet sockets; it is an error to call it on another type of socket.
-; {{path}} : returns the pathname for UNIX sockets, or an error for other socket types.
-; {{->string}} : returns a compact representation of the socket address as a string.  For Internet sockets, it returns "address" when port is 0; otherwise, it returns "address:port" for IPv4 addresses and "[address]:port" for IPv6 addresses.
+; {{sockaddr-family}} : returns the socket address family as an integer constant, e.g. {{af/inet}}.
+; {{sockaddr-address}} : returns the address of a socket as a string (for Internet sockets, this is the IP address).
+; {{sockaddr-port}} : returns the socket port for Internet sockets; it is an error to call it on another type of socket.
+; {{sockaddr-path}} : returns the pathname for UNIX sockets, or an error for other socket types.
+; {{sockaddr->string}} : returns a compact representation of the socket address as a string.  For Internet sockets, it returns "address" when port is 0; otherwise, it returns "address:port" for IPv4 addresses and "[address]:port" for IPv6 addresses.
 
 <procedure>(inet-address addr port)</procedure>
 
-Returns a {{sockaddr}} object constructed from IP address ADDR (a
-string) and port PORT (a number or numeric string).  If the address
+Returns a {{sockaddr}} object constructed from IP address {{addr}} (a
+string) and port {{port}} (a number or numeric string).  If the address
 or port input is invalid, an error is raised.
 
-If ADDR is {{#f}}, the unspecified address is used ("::" or "0.0.0.0").
-If PORT is {{#f}}, the unspecified port is used (integer 0).
-It is an error for both ADDR and PORT to be unspecified.
+If {{addr}} is {{#f}}, the unspecified address is used ("::" or "0.0.0.0").
+If {{port}} is {{#f}}, the unspecified port is used (integer 0).
+It is an error for both {{addr}} and {{port}} to be unspecified.
 
 Note that when IPv6 is preferred on your system, the unspecified
 address {{#f}} is typically "::" and the resulting object will be of
@@ -124,13 +124,13 @@ family {{af/inet6}}.  This may not be what you want, so it is a good
 idea to specify which unspecified address (yes, really) you mean --
 "::" or "0.0.0.0" -- in lieu of {{#f}}.
 
-<procedure>(unix-address PATH)</procedure>
+<procedure>(unix-address path)</procedure>
 
-Returns a {{sockaddr}} object constructed from the pathname PATH,
+Returns a {{sockaddr}} object constructed from the pathname {{path}},
 suitable for use with a socket in address family {{af/unix}}.
 Throws an error if UNIX sockets are not supported on your platform.
 
-=== Address resolution
+==== Address resolution
 
 <procedure>(address-information node service #!key family (type sock/stream) protocol flags)</procedure><br>
 <constant>ai/numerichost</constant><br>
@@ -142,20 +142,20 @@ values.  Returns a list of {{addrinfo}} objects, each of which contains
 a socket address ({{sockaddr}} object) suitable for use in socket calls
 such as {{socket-bind}} and {{socket-connect}}.
 
-NODE is either a node name (string) or IP address (string).
-SERVICE may be a string representing a service name or port number, or
-an integer.  If NODE is {{#f}}, it is treated as the loopback address;
+{{node}} is either a node name (string) or IP address (string).
+{{service}} may be a string representing a service name or port number, or
+an integer.  If {{node}} is {{#f}}, it is treated as the loopback address;
 however, if {{ai/passive}} is set it is treated as the unspecified
-address.  If SERVICE is {{#f}}, it is treated as unspecified (0).
+address.  If {{service}} is {{#f}}, it is treated as unspecified (0).
 
 Keyword arguments accept numeric constants and restrict the returned addresses accordingly:
 
-; {{family:}} : Address family, either {{af/inet}} or {{af/inet6}}, defaulting to {{#f}}.  If {{#f}}, both IPv6 and IPv4 addresses may be returned, depending on your system's configuration and IP stack.
-; {{type:}} : Socket type; usually {{sock/stream}} or {{sock/dgram}}, defaulting to {{sock/stream}}.  Can be {{#f}}, but results may vary between systems, so it is safer to specify one.  See examples.
-; {{protocol:}} : Protocol type, usually {{#f}}.  Can also be {{ipproto/tcp}} or {{ipproto/udp}}; however, some systems (such as Windows) do not construct a proper socket address when {{type:}} is unspecified, so it is safer to just provide a value for {{type:}} and leave this as {{#f}}.
+; {{family}} : Address family, either {{af/inet}} or {{af/inet6}}, defaulting to {{#f}}.  If {{#f}}, both IPv6 and IPv4 addresses may be returned, depending on your system's configuration and IP stack.
+; {{type}} : Socket type; usually {{sock/stream}} or {{sock/dgram}}, defaulting to {{sock/stream}}.  Can be {{#f}}, but results may vary between systems, so it is safer to specify one.  See examples.
+; {{protocol}} : Protocol type, usually {{#f}}.  Can also be {{ipproto/tcp}} or {{ipproto/udp}}; however, some systems (such as Windows) do not construct a proper socket address when {{type}} is unspecified, so it is safer to just provide a value for {{type}} and leave this as {{#f}}.
 
 The behavior of {{address-information}} can be influenced by the value
-of {{flags:}}, which should be the {{bitwise-ior}} (or simply {{+}}) of any
+of {{flags}}, which should be the {{bitwise-ior}} (or simply {{+}}) of any
 of the following constants:
 
 ; {{ai/numerichost}} : The host is an IP address string; do not attempt to resolve it.
@@ -208,10 +208,10 @@ Examples:
 
 Address information record returned by {{address-information}}.
 
-* {{address}} is the {{sockaddr}} socket address object;
-* {{family}}, {{socktype}} and {{protocol}} are numeric constants in the {{af/}}, {{sock/}} and {{ipproto/}} families respectively;
-* {{canonname}} is the canonical (FQDN) name of this host and is present only if the {{ai/canonname}} flag was used; otherwise {{#f}};
-* {{flags}} is the bitwise OR of {{ai/}} flags used when constructing this object.  The system may set certain flags itself so this is probably not reliably useful.
+* {{addrinfo-address}} is the {{sockaddr}} socket address object;
+* {{addrinfo-family}}, {{addrinfo-socktype}} and {{addrinfo-protocol}} are numeric constants in the {{af/}}, {{sock/}} and {{ipproto/}} families respectively;
+* {{addrinfo-canonname}} is the canonical (FQDN) name of this host and is present only if the {{ai/canonname}} flag was used; otherwise {{#f}};
+* {{addrinfo-flags}} is the bitwise OR of {{ai/}} flags used when constructing this object.  The system may set certain flags itself so this is probably not reliably useful.
 
 <procedure>(name-information saddr #!optional (flags 0))</procedure><br>
 <constant>ni/numerichost</constant><br>
@@ -220,7 +220,7 @@ Address information record returned by {{address-information}}.
 <constant>ni/namereqd</constant><br>
 <constant>ni/nofqdn</constant><br>
 
-Given a socket address object SADDR, performs a reverse-lookup to
+Given a socket address object {{saddr}}, performs a reverse-lookup to
 obtain the node and service names, returning them as the pair
 {{("node" . "service")}}.  If hostname lookup fails, the numeric
 representation of the address is returned as a string.  If service
@@ -228,8 +228,8 @@ number lookup fails, it is returned as an integer.
 
 The socket address object is usually constructed with {{inet-address}}
 or obtained from a socket call, e.g. {{socket-peer-name}}.  As a
-convenience in socket 0.2.1 and later, if {{SADDR}} is a string, it is
-converted to a socket address object with {{(inet-address SADDR #f)}}.
+convenience in socket 0.2.1 and later, if {{saddr}} is a string, it is
+converted to a socket address object with {{(inet-address saddr #f)}}.
 
 The behavior of {{name-information}} can be influenced by FLAGS.  FLAGS
 may be the {{bitwise-ior}} (or simply {{+}}) of the following
@@ -264,13 +264,13 @@ Examples:
  (name-information (socket-peer-name s))  ;; s being an accept()ed socket
    ; => ("taco.universe12.dim" . 31828)
 
-=== Setup and teardown
+==== Setup and teardown
 
 <procedure>(socket-connect so saddr)</procedure><br>
 <procedure>(socket-connect/ai ais)</procedure><br>
 
-{{socket-connect}} connects to the remote socket address SADDR over
-the socket SO.  Upon completion, SO will be connected; on connection
+{{socket-connect}} connects to the remote socket address {{saddr}} over
+the socket {{so}}.  Upon completion, {{so}} will be connected; on connection
 failure an error is thrown.  The return value is unspecified.  This is
 a non-blocking operation; other SRFI-18 threads can continue to run.
 
@@ -283,7 +283,7 @@ occurs, it raises an error of type {{(exn i/o net)}}, like all other
 socket procedures.
 
 {{socket-connect/ai}} connects to the addresses in the {{addrinfo}}
-list AIS sequentially until the connection succeeds or there are no
+list {{ais}} sequentially until the connection succeeds or there are no
 more addresses.  If a fatal error occurs while connecting, it aborts
 immediately; but transient or timeout errors cause it to try the next
 address.  If all attempts fail, the error raised is that of the last
@@ -320,7 +320,7 @@ Examples:
 
 <procedure>(socket-bind so saddr)</procedure>
 
-Binds socket SO to socket address SADDR.  The return value is unspecified.
+Binds socket {{so}} to socket address {{saddr}}.  The return value is unspecified.
 
  ; Bind to the IPv4 unspecified address on port 8000.
  (define so (socket af/inet sock/stream))
@@ -339,20 +339,20 @@ Binds socket SO to socket address SADDR.  The return value is unspecified.
 
 <procedure>(socket-listen so backlog)</procedure>
 
-Listen for incoming connections on socket SO, with a connection queue
-of integer length BACKLOG.   This call is only valid for 
+Listen for incoming connections on socket {{so}}, with a connection queue
+of integer length {{backlog}}.   This call is only valid for 
 connection-oriented (stream) sockets.
 
 <procedure>(socket-accept so)</procedure>
 <procedure>(socket-accept-ready? so)</procedure>
 
-{{socket-accept}} accepts a connection on listening socket SO,
+{{socket-accept}} accepts a connection on listening socket {{so}},
 returning a new connected {{socket}} object.  The address of the peer
 can be obtained by calling {{socket-peer-name}} on the socket.
 
 This is a non-blocking operation; other SRFI-18 threads can continue
 to run in the meantime, although this one will block.  If the accept
-does not complete within {{(socket-accept-timeout)}} milliseconds, a
+does not complete within {{socket-accept-timeout}} milliseconds, a
 timeout error is raised.
 
 {{socket-accept-ready?}} tests whether there is a connection waiting
@@ -365,7 +365,7 @@ accepting, the accept may block nonetheless.
 <constant>shut/wr</constant>
 <constant>shut/rdwr</constant>
 
-Shutdown the full-duplex connection on socket SO in the manner of HOW:
+Shutdown the full-duplex connection on socket {{so}} in the manner of {{how}}:
 
 ; {{shut/rd}} : disallow further receiving
 ; {{shut/wr}} : disallow further sending
@@ -378,7 +378,7 @@ while allowing it to continue sending to you.
 
 <procedure>(socket-close so)</procedure>
 
-Close socket SO.  If a connection was established,
+Close socket {{so}}.  If a connection was established,
 the socket is shut down gracefully.
 
 {{socket-close}} throws an error if the {{close()}} fails.
@@ -392,12 +392,12 @@ This could be useful in certain lowlevel code, such as after a network
 error, but you should not use this unless you know what you're doing.
 This might go away or change semantics in the future.
 
-=== Status
+==== Status
 
 <procedure>(socket-name so)</procedure>
 
 Return a {{sockaddr}} object representing the address of the local
-endpoint of socket SO.  If the socket has not been bound, it
+endpoint of socket {{so}}.  If the socket has not been bound, it
 returns {{#f}}.
 
 The procedure name is derived from getsockname(), hence the use of "name"
@@ -406,7 +406,7 @@ to describe a socket address.
 <procedure>(socket-peer-name so)</procedure>
 
 Return a {{sockaddr}} object representing the address of the remote
-endpoint of socket SO.  If no connection exists, returns {{#f}}.  This
+endpoint of socket {{so}}.  If no connection exists, returns {{#f}}.  This
 can be used after {{socket-connect}} or on a socket returned by
 {{socket-accept}}.  Note that this also works with UDP "connections"
 made with {{socket-connect}}.
@@ -414,33 +414,33 @@ made with {{socket-connect}}.
 The procedure name is derived from getpeername(), hence the use of "name"
 to describe a socket address.  
 
-=== Data transfer
+==== Data transfer
 
-==== Receiving data
+===== Receiving data
 
 <procedure>(socket-receive! so buf #!optional (start 0) (end #f) (flags 0))</procedure>
 <procedure>(socket-receive-ready? so)</procedure>
 
-Receives data from socket SO and writes it into BUF, which may be a
-string or a blob.  START and END are optional offsets into BUF; the
-call attempts to read END - START = LEN bytes.  If END is {{#f}}, it
+Receives data from socket {{so}} and writes it into {{buf}}, which may be a
+string or a blob.  {{start}} and {{end}} are optional offsets into {{buf}}; the
+call attempts to read {{end}} - {{start}} = {{len}} bytes.  If {{end}} is {{#f}}, it
 is interpreted as the end of the blob or string.
 
 This call will block until data is available, but other threads can
 proceed.  If the receive does not complete within
-{{(socket-receive-timeout)}} milliseconds, a timeout error is raised.
+{{socket-receive-timeout}} milliseconds, a timeout error is raised.
 To avoid blocking the current thread, you can check if data is ready
 via {{socket-receive-ready?}}.
 
-Returns the number of bytes actually received (and updates BUF as
+Returns the number of bytes actually received (and updates {{buf}} as
 a side effect).
 
-For datagram sockets, if LEN is smaller than the amount of data in
+For datagram sockets, if {{len}} is smaller than the amount of data in
 the next datagram, the rest of the data is irrevocably lost.
 
 <procedure>(socket-receive so len #!optional (flags 0))</procedure>
 
-Receives up to LEN bytes from data from socket SO and returns it
+Receives up to {{len}} bytes from data from socket {{so}} and returns it
 in a string (sized to fit the returned data).  Otherwise, it behaves
 like {{socket-receive!}}.
 
@@ -452,18 +452,18 @@ datagram socket, returning 2 values: the number of bytes read, and a
 
 <procedure>(socket-receive-from so len #!optional (flags 0))</procedure>
 
-Receives up to LEN bytes from data from socket SO and returns two
+Receives up to {{len}} bytes from data from socket {{so}} and returns two
 values: a string (sized to fit the returned data), and a {{sockaddr}}
 object representing the source.  Otherwise, it behaves like
 {{socket-receive-from!}}.
 
-==== Sending data
+===== Sending data
 
 <procedure>(socket-send so buf #!optional (start 0) (end #f) (flags 0))</procedure>
 
-Sends data to socket SO from the buffer BUF, which may be a
-string or a blob.  START and END are optional offsets into BUF; the
-call attempts to write END - START = LEN bytes.  If END is {{#f}}, it
+Sends data to socket {{so}} from the buffer {{buf}}, which may be a
+string or a blob.  {{start}} and {{end}} are optional offsets into {{buf}}; the
+call attempts to write {{end}} - {{start}} = {{len}} bytes.  If {{end}} is {{#f}}, it
 is interpreted as the end of the blob or string.
 
 This call will block until at least some data is sent, but other
@@ -475,12 +475,12 @@ Returns the number of bytes actually sent.
 <procedure>(socket-send-to so buf saddr #!optional (start 0) (end #f) (flags 0))</procedure>
 
 Like {{socket-send}}, but sends data over a connectionless datagram
-socket to {{sockaddr}} SADDR, returning the number of bytes actually
+socket to {{sockaddr}} {{saddr}}, returning the number of bytes actually
 sent.
 
 <procedure>(socket-send-all so buf #!optional (start 0) (end #f) (flags 0))</procedure>
 
-Sends all data between START and END in BUF over connected socket SO
+Sends all data between {{start}} and {{end}} in {{buf}} over connected socket {{so}}
 by calling {{socket-send}} multiple times until all data is sent.
 
 Data is sent in chunks of size {{(socket-send-size)}}; the last chunk
@@ -490,12 +490,12 @@ call to send().  Note that this chunking works for connected datagram
 sockets as well as stream sockets; you can use it to send a large
 buffer divided into, say, 512-byte datagrams.
 
-=== I/O ports
+==== I/O ports
 
 <procedure>(socket-i/o-ports so)</procedure>
 
 Constructs an input port I and an output port O associated with
-the connected socket SO, returning {{(values I O)}}.  This procedure
+the connected socket {{so}}, returning {{(values I O)}}.  This procedure
 works on both stream and datagram sockets.
 
 To enable output buffering on stream socket ports, see the parameter
@@ -555,17 +555,17 @@ at a time and send 128-, 256-, 384- or 512-byte datagrams at a time:
    ;; a useful example would be nice
    ...)
 
-<procedure>(socket-i/o-port->socket p)</procedure>
+<procedure>(socket-i/o-port->socket port)</procedure>
 
-Returns the socket object assocated with input or output port P.  From
+Returns the socket object assocated with input or output port {{port}}.  From
 there you can obtain a file descriptor with {{socket-fileno}}.
 
 Alternatively, {{port->fileno}} from [[/man/4/Unit posix|posix]] is
 supported to obtain a file descriptor.  (Also see [[#Bugs and limitations]].)
 
-<procedure>(socket-abandon-port p)</procedure>
+<procedure>(socket-abandon-port port)</procedure>
 
-Marks the socket input or output port P as abandoned.  Normally, when
+Marks the socket input or output port {{port}} as abandoned.  Normally, when
 an socket input port is closed the read side of the connection is shut
 down; similarly closing the output port shuts down the write side.
 Marking a port as abandoned skips this shutdown.  This is useful to
@@ -574,7 +574,7 @@ ensure a connection stays open after the port is closed.
 The socket is still closed after both ports are closed, regardless of
 their abandoned status.
 
-=== Parameters
+==== Parameters
 
 <parameter>(socket-connect-timeout ms) [default: #f]</parameter><br>
 <parameter>(socket-accept-timeout ms)  [default: #f]</parameter><br>
@@ -608,7 +608,7 @@ power of 2 is an appropriate value, such as 8K or 16K.
 in socket input ports.  A power of 2, such as 4K, is appropriate.
 Input buffering can not be disabled.
 
-== Socket option interface
+=== Socket option interface
 
 BSD socket option values are of substantially differing types: boolean flags
 (TCP_NODELAY), integers (SO_SNDBUF), structures (SO_LINGER), and so on.  Still, we want a
@@ -634,7 +634,7 @@ platforms, particularly Windows, may return a false positive for
 "unsupported option" when it really indicates a usage error (wrong
 socket type or option value).
 
-=== Socket option accessors
+==== Socket option accessors
 
 Below is a list of option procedures and their value type.  The procedure names are
 verbose variants of their associated constant names.  For example, {{SO_REUSEADDR}} becomes
@@ -658,7 +658,7 @@ least.  There is an example of linger support in the low-level interface below.
 <procedure>(so-error s)               [so/error]      (r/o)</procedure><br>
 <procedure>(so-type s)                [so/type]       (r/o)</procedure><br>
 
-Getters / setters for boolean and integer socket-level options, where S is a
+Getters / setters for boolean and integer socket-level options, where {{s}} is a
 ''socket'' object or an integer file descriptor.  To set an option, use SRFI-17
 generalized set:
 
@@ -679,22 +679,22 @@ bound address and port.
 <procedure>(tcp-keep-alive s)       [tcp/keepalive]</procedure><br>
 <procedure>(tcp-max-segment-size s) [tcp/maxseg]</procedure><br>
 
-Getters / setters for TCP-level socket options ({{ipproto/tcp}}).  S is
+Getters / setters for TCP-level socket options ({{ipproto/tcp}}).  {{s}} is
 a ''socket'' object or an integer file descriptor.
 
 <procedure>(ip-header-included? s)  [ip/hdrincl]</procedure><br>
 <procedure>(ip-type-of-service s)   [ip/tos]</procedure><br>
 <procedure>(ip-time-to-live s)      [ip/ttl]</procedure><br>
 
-Getters / setters for IP-level socket options ({{ipproto/ip}}).  S is
+Getters / setters for IP-level socket options ({{ipproto/ip}}).  {{s}} is
 a ''socket'' object or an integer file descriptor.
 
 <procedure>(ipv6-v6-only? s)        [ipv6/v6only]            </procedure><br>
 
-Getters / setters for IPv6-level socket options ({{ipproto/ipv6}}).  S is
+Getters / setters for IPv6-level socket options ({{ipproto/ipv6}}).  {{s}} is
 a ''socket'' object or an integer file descriptor.
 
-=== Low-level socket option interface
+==== Low-level socket option interface
 
 A low-level socket option interface is also provided.  This is
 intended to let you use the constants defined above (or your own) when
@@ -706,8 +706,8 @@ interface.
 
 <procedure>(set-socket-option s level name val)</procedure>
 
-Set the value of option {{NAME}} at socket level {{LEVEL}} on socket {{S}} to {{VAL}}.
-{{VAL}} may be a fixnum or a boolean.  It may also be a blob or a string; if so, the raw
+Set the value of option {{name}} at socket level {{level}} on socket {{s}} to {{val}}.
+{{val}} may be a fixnum or a boolean.  It may also be a blob or a string; if so, the raw
 contents are passed to the option, which is useful when a structure is required.  The return value is unspecified.
 
 If an unsupported option or level is requested, a condition of type
@@ -724,11 +724,11 @@ for more.
 
 <procedure>(get-socket-option s level name #!optional (len #f))</procedure>
 
-Get the value of option {{NAME}} at socket level {{LEVEL}} on socket
-{{S}}.  If {{LEN}} is {{#f}}, the default, we interpret the option
+Get the value of option {{name}} at socket level {{level}} on socket
+{{s}}.  If {{len}} is {{#f}}, the default, we interpret the option
 value as an integer and return that.  Otherwise, temporary storage of
-length {{LEN}} is allocated to receive the binary option data; after
-the call it is resized to fit the data, and returned.  If LEN is too
+length {{len}} is allocated to receive the binary option data; after
+the call it is resized to fit the data, and returned.  If {{len}} is too
 small to hold the returned data, the result is undefined.
 
 If an unsupported option or level is requested, a condition of type
@@ -744,7 +744,7 @@ You can only rely on true being some non-zero value.
  (get-socket-option S ipproto/tcp tcp/nodelay 64)  ; => #${08000000}
  (get-socket-option S ipproto/tcp tcp/nodelay 4)   ; => #${08000000}
 
-=== Socket option constants
+==== Socket option constants
 
 Integer constants are provided for socket levels, socket types, and
 socket options.  They are renamed slightly, and consistently, to
@@ -758,7 +758,7 @@ constant but not support it (for example, {{ipv6/v6only}} on Windows
 prior to Vista); this will not be known until you try to get or set
 it.
 
-==== Socket-level constants
+===== Socket-level constants
 
 <constant>so/reuseaddr</constant><br>
 <constant>so/debug</constant><br>
@@ -784,7 +784,7 @@ it.
 Socket-level socket options for use with {{set-socket-option}} and
 {{get-socket-option}} at level {{sol/socket}}.
 
-==== TCP-level constants
+===== TCP-level constants
 
 <constant>tcp/nodelay</constant><br>
 <constant>tcp/nopush</constant><br>
@@ -795,7 +795,7 @@ Socket-level socket options for use with {{set-socket-option}} and
 TCP-level socket options for use with {{set-socket-option}} and
 {{get-socket-option}} at level {{ipproto/tcp}}.
 
-==== IP-level constants
+===== IP-level constants
 
 <constant>ip/options</constant><br>
 <constant>ip/hdrincl</constant><br>
@@ -821,7 +821,7 @@ TCP-level socket options for use with {{set-socket-option}} and
 IP-level socket options for use with {{set-socket-option}} and
 {{get-socket-option}} at level {{ipproto/ip}}.
 
-==== Socket and protocol levels
+===== Socket and protocol levels
 
 <constant>sol/socket</constant><br>
 <constant>ipproto/ip</constant><br>
@@ -832,7 +832,7 @@ IP-level socket options for use with {{set-socket-option}} and
 
 Socket level constants, for use with {{set-socket-option}} and {{get-socket-option}}.
 
-=== SO_LINGER lowlevel example
+==== SO_LINGER lowlevel example
 
 This is a pretty hairy example of getting and setting the {{so/linger}} option, which does
 not currently have a high-level equivalent.  {{so/linger}} usually takes and returns a
@@ -864,16 +864,16 @@ have a high-level interface created for it instead.
   (get-socket-option S sol/socket so/linger _linger_size))
     ; => (#t 100)
 
-== Examples
+=== Examples
 
-=== Client-server examples
+==== Client-server examples
 
 For a simple example of client-server communication over a unix socket, see
 [[/Communicating over a unix socket, using the socket egg|here]].
 
 A TCP/IP example is still to be written.
 
-=== Disable Nagle's Algorithm on TCP listener socket
+==== Disable Nagle's Algorithm on TCP listener socket
 
 The [[/man/4/Unit tcp|tcp unit]] does not support setting arbitrary socket 
 options on sockets it creates.  However, you can obtain a listener's
@@ -883,7 +883,7 @@ socket file descriptor after the fact.
  (define S (tcp-listener-fileno L))
  (set! (tcp-no-delay? S) #t)
 
-=== Set socket options on HTTP server
+==== Set socket options on HTTP server
 
 This is similar to the above.  HTTP servers may see some performance
 gain when Nagle's algorithm is disabled.  This is generally the
@@ -898,7 +898,7 @@ default on Linux, but not Solaris or OS X.
                    L))))
    ((http:make-server ...)))
 
-== Bugs and limitations
+=== Bugs and limitations
 
 * If IPv6 support is totally unavailable on your platform (not simply disabled)
   then building this extension will fail.  This should be fixed in a future
@@ -913,17 +913,24 @@ default on Linux, but not Solaris or OS X.
   around is safe: procedures in this extension will throw an error if
   used with core tcp ports.
 
-== About this egg
+=== About this egg
 
-=== Author
+==== Source
+
+[[https://github.com/ursetto/socket-egg]]
+
+==== Author
 
 [[http://3e8.org|Jim Ursetto]]
 
 Some code was derived from the core [[/man/4/Unit tcp|tcp]]
 unit by Felix Winkelmann and the rest of the Chicken team.
 
-=== Version history
+==== Version history
 
+; 0.3.2 : Remove debug print statements (kdltr)
+; 0.3.1 : Add Chicken 5 support. Add simple unix socket test to {{tests/}}; not used by {{-test}}.
+; 0.2.7 : remove some debug prints
 ; 0.2.6 : Handle {{##sys#scan-buffer-line}} signature change in CHICKEN 4.8.2.  Bug reported by Jonathan Chan and David Krentzlin.
 ; 0.2.5 : socket-accept: Handle select failure. Patch by Jonathan Chan.
 ; 0.2.4 : {{SO_EXCLUSIVEADDR}} fix for Cygwin
@@ -933,14 +940,14 @@ unit by Felix Winkelmann and the rest of the Chicken team.
 ; 0.2 : Add UNIX socket support; eliminate much dead code and runtime support checks.
 ; 0.1 : Initial release for Chicken 4.
 
-=== Portability
+==== Portability
 
 * socket 0.1 has been successfully built and tested on Mac OS X 10.5, 
   Ubuntu 10.10, Windows XP SP3 and NetBSD 5.1.
 
-=== License
+==== License
 
- Copyright (c) 2011-2014, Jim Ursetto.  All rights reserved.
+ Copyright (c) 2011-2019, Jim Ursetto.  All rights reserved.
  Copyright (c) 2008-2011, The Chicken Team
  Copyright (c) 2000-2007, Felix L. Winkelmann 
  
