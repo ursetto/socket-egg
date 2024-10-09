@@ -5,13 +5,13 @@
 (license "BSD")
 (category net)
 (version "0.3.3")
-(components (generated-source-file socket-config
+(components (generated-source-file socket-config.scm
                                    (custom-build "build-socket-config")
                                    (source-dependencies "socket-features.scm"))
             (extension socket
                        (source "socket-mod.scm")
                        (source-dependencies "socket.scm")
-                       (component-dependencies socket-config)
+                       (component-dependencies socket-config.scm)
                        (csc-options "-O2" "-d1"
                                     "-X" "socket-config"
                                     "-X" "feature-test-syntax"
