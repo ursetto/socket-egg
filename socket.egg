@@ -13,6 +13,7 @@
                        (source-dependencies "socket.scm")
                        (component-dependencies socket-config.scm)
                        (csc-options "-O2" "-d1"
+                                    "-disable-interrupts"
                                     "-X" "socket-config"
                                     "-X" "feature-test-syntax"
                                     "-D" "scan-buffer-line-returns-3-vals")))
